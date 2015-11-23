@@ -1,6 +1,24 @@
 Images = new Mongo.Collection("images");
 
 if (Meteor.isClient) {
+
+  Session.set('imageLimit',8);
+  var lastScrollTop = 0;
+
+  $(window).scroll(function(event) {
+    // test if we are near the bottom of the window
+    if(($(window).scrollTop() + $(window).height()) >= $(document).height() - 100) {
+      // where are we in the page?
+      var scrollTop = $(this).scrollTop();
+      // test if we are going down
+      if(scrollTop > lastScrollTop) {
+        // yes we are heading down...
+        Session.set('imageLimit', Session.get('imageLimit') + 4);
+      }
+      lastScrollTop = scrollTop;
+    }
+  });
+
   Accounts.ui.config({
     passwordSignupFields: "USERNAME_AND_EMAIL"
   });
@@ -10,7 +28,7 @@ if (Meteor.isClient) {
       if(Session.get('userFilter')) {
         return Images.find({createdBy:Session.get('userFilter')}, {sort:{createdOn:-1, rating:-1}});
       } else {
-        return Images.find({}, {sort:{createdOn:-1, rating:-1}});
+        return Images.find({}, {sort:{createdOn:-1, rating:-1}, limit:Session.get('imageLimit')});
       }
     },
     filtering_images:function() {
@@ -26,12 +44,6 @@ if (Meteor.isClient) {
         return user.username;
       } else {
         return false;
-      }
-    },
-    noUser:function(user_id) {
-      var user = Meteor.users.findOne({_id:user_id});
-      if(user) {
-        return user.username;
       }
     },
     getUser:function(user_id) {
